@@ -1,0 +1,10 @@
+PUT http://localhost:3003/api/blogs/69f63a1fbd6e7bfa60a249f8
+Content-Type: application/json
+
+{
+    "title": "New Blog Form",
+    "author": "Zhalel",
+    "url": "zhalel.com",
+    "likes": 1,
+    "user": "69f35bcbb7d3b344d3bd4dad"
+}
