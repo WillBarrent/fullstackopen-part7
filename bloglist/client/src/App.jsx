@@ -22,6 +22,8 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
+import { ErrorBoundary } from "react-error-boundary";
+import NotFound from "./components/NotFound";
 
 const App = () => {
   const [blogs, setBlogs] = useState([]);
@@ -160,49 +162,58 @@ const App = () => {
           </Box>
         </Toolbar>
       </AppBar>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <Blogs notification={notification} sortedBlogs={sortedBlogs} />
-          }
-        />
-        <Route
-          path="/blogs/:id"
-          element={
-            <Blog
-              blog={blog}
-              blogs={blogs}
-              setBlogs={setBlogs}
-              user={user ? user : null}
-              handleLike={handleLike}
-            />
-          }
-        />
-        <Route
-          path="/create"
-          element={
-            <NewBlogForm
-              handleBlogAddition={handleBlogAddition}
-              notification={notification}
-              user={user}
-            />
-          }
-        />
-        <Route
-          path="/login"
-          element={
-            <Login
-              handleLogin={handleLogin}
-              notification={notification}
-              password={password}
-              setPassword={setPassword}
-              user={user}
-              setUsername={setUsername}
-            />
-          }
-        />
-      </Routes>
+      <ErrorBoundary
+        fallback={
+          <Box style={{ marginTop: 10 }}>
+            <Typography variant="h5">Something went wrong</Typography>
+          </Box>
+        }
+      >
+        <Routes>
+          <Route path="*" element={<NotFound />} />
+          <Route
+            path="/"
+            element={
+              <Blogs notification={notification} sortedBlogs={sortedBlogs} />
+            }
+          />
+          <Route
+            path="/blogs/:id"
+            element={
+              <Blog
+                blog={blog}
+                blogs={blogs}
+                setBlogs={setBlogs}
+                user={user ? user : null}
+                handleLike={handleLike}
+              />
+            }
+          />
+          <Route
+            path="/create"
+            element={
+              <NewBlogForm
+                handleBlogAddition={handleBlogAddition}
+                notification={notification}
+                user={user}
+              />
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <Login
+                handleLogin={handleLogin}
+                notification={notification}
+                password={password}
+                setPassword={setPassword}
+                user={user}
+                setUsername={setUsername}
+              />
+            }
+          />
+        </Routes>
+      </ErrorBoundary>
     </Container>
   );
 };
