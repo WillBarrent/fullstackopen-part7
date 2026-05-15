@@ -1,14 +1,17 @@
 import { Link } from "react-router-dom";
 import Blog from "./Blog";
 import Notification from "./Notification";
+import { useBlogs } from "../store";
 
-const Blogs = ({ notification, sortedBlogs }) => {
+const Blogs = () => {
+  const blogs = useBlogs();
+
   return (
     <div>
       <h2>blogs</h2>
-      <Notification notification={notification}/>
+      <Notification />
       <ul>
-        {sortedBlogs.map((blog) => (
+        {blogs.map((blog) => (
           <li key={blog.id}>
             <Link to={`/blogs/${blog.id}`}>{blog.title}</Link>
           </li>

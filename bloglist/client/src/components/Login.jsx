@@ -1,18 +1,29 @@
 import { Button, TextField } from "@mui/material";
 import Notification from "./Notification";
+import { useLoggedUserActions } from "../store";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Login = ({
   handleLogin,
-  notification,
   username,
   setUsername,
   password,
   setPassword,
 }) => {
+  const { isLoggedIn } = useLoggedUserActions();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isLoggedIn()) {
+      return navigate("/");
+    }
+  }, [isLoggedIn, navigate]);
+
   return (
     <form onSubmit={handleLogin}>
       <h2>log in to application</h2>
-      <Notification notification={notification} />
+      <Notification />
       <div>
         <TextField
           label="username"
