@@ -1,19 +1,32 @@
 import { useNavigate } from "react-router-dom";
-import { Button, Card, CardContent, Stack, Typography } from "@mui/material";
-import { useBlogs } from "../hooks";
+import {
+  Button,
+  Card,
+  CardContent,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useBlogs, useField } from "../hooks";
 import { useContext } from "react";
 import UserContext from "../UserContext";
 
 const Blog = ({ blog }) => {
   const navigate = useNavigate();
-  const { remove, likeBlog } = useBlogs();
+  const { remove, likeBlog, addComment } = useBlogs();
   const { user, isLoggedIn } = useContext(UserContext);
+  const comment = useField("add a comment", "text");
 
   const handleDeletion = async (event) => {
     event.preventDefault();
 
     remove(blog.id);
     navigate("/");
+  };
+
+  const handleCommentAddition = (event) => {
+    event.preventDefault();
+    addComment(blog.id, comment.value);
   };
 
   if (!blog) {
@@ -70,6 +83,28 @@ const Blog = ({ blog }) => {
             </Button>
           )}
         </Stack>
+        <Typography variant="h5" style={{ marginTop: 20 }}>
+          Comments
+        </Typography>
+        {isLoggedIn() ? (
+          <form onSubmit={handleCommentAddition} style={{ marginTop: 10 }}>
+            <Stack direction={"row"}>
+              <TextField {...comment} />
+              <Button
+                type="submit"
+                variant="contained"
+                style={{ marginLeft: 10 }}
+              >
+                add comment
+              </Button>
+            </Stack>
+          </form>
+        ) : null}
+        <ul>
+          {blog.comments.map((comment) => {
+            return <li key={comment.id}>{comment.comment}</li>;
+          })}
+        </ul>
       </CardContent>
     </Card>
   );

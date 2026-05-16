@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import blogService from "../services/blogs";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import NotificationContext from "../NotificationContext";
 
 export const useBlogs = () => {
@@ -10,6 +10,8 @@ export const useBlogs = () => {
   const result = useQuery({
     queryKey: ["blogs"],
     queryFn: blogService.getAll,
+    refetchInterval: 500,
+    refetchOnWindowFocus: false,
   });
 
   const newBlogMutation = useMutation({
@@ -21,6 +23,31 @@ export const useBlogs = () => {
     },
     onError: (error) => {
       notificate(error.response.data.error, 5000);
+    },
+  });
+
+  const newCommentMutation = useMutation({
+    mutationFn: blogService.createComment,
+    onSuccess: (newBlog) => {
+      const blogs = queryClient.getQueryData(["blogs"]);
+      queryClient.setQueryData(
+        ["blogs"],
+        blogs.map((blog) => {
+          if (blog.id === newBlog.blogId) {
+            const comment = {
+              id: newBlog.id,
+              comment: newBlog.comment,
+            };
+
+            return {
+              ...blog,
+              comments: blog.comments.concat(comment),
+            };
+          }
+
+          return blog;
+        }),
+      );
     },
   });
 
@@ -62,6 +89,7 @@ export const useBlogs = () => {
     blogs: result.data,
     isPending: result.isPending,
     create: (newBlog) => newBlogMutation.mutate(newBlog),
+    addComment: (id, comment) => newCommentMutation.mutate({ id, comment }),
     remove: (id) => deleteBlogMutation.mutate(id),
     likeBlog: (id, updatedBlog) =>
       updateBlogMutation.mutate({
@@ -69,4 +97,14 @@ export const useBlogs = () => {
         updatedBlog: { ...updatedBlog, likes: updatedBlog.likes + 1 },
       }),
   };
+};
+
+export const useField = (label, type) => {
+  const [value, setValue] = useState("");
+
+  const onChange = (event) => {
+    setValue(event.target.value);
+  };
+
+  return { label, type, value, onChange };
 };
