@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -24,22 +24,18 @@ import {
 } from "@mui/material";
 import { ErrorBoundary } from "react-error-boundary";
 import NotFound from "./components/NotFound";
+import NotificationContext from "./NotificationContext";
+import { useBlogs } from "./hooks";
+import UserContext from "./UserContext";
 
 const App = () => {
-  const [blogs, setBlogs] = useState([]);
-  const [user, setUser] = useState(null);
+  const { blogs, isPending, create } = useBlogs();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [notification, setNotification] = useState(null);
+  const { notification, notificate } = useContext(NotificationContext);
+  const { setUser, isLoggedIn } = useContext(UserContext);
   const navigate = useNavigate();
-
-  const sortedBlogs = blogs.sort((a, b) => b.likes - a.likes);
   const match = useMatch("/blogs/:id");
-  const blog = match ? blogs.find((blog) => blog.id === match.params.id) : null;
-
-  useEffect(() => {
-    blogService.getAll().then((blogs) => setBlogs(blogs));
-  }, []);
 
   useEffect(() => {
     const loggedUser = window.localStorage.getItem("loggedUser");
@@ -48,7 +44,18 @@ const App = () => {
       setUser(user);
       blogService.setToken(user.token);
     }
-  }, []);
+  }, [setUser]);
+
+  if (isPending) {
+    return (
+      <Container>
+        <Typography>Loading...</Typography>
+      </Container>
+    );
+  }
+
+  const sortedBlogs = blogs.toSorted((a, b) => b.likes - a.likes);
+  const blog = match ? blogs.find((blog) => blog.id === match.params.id) : null;
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -62,16 +69,10 @@ const App = () => {
       setUsername("");
       setPassword("");
 
-      setNotification("You have successfully logged in!");
-      setTimeout(() => {
-        setNotification(null);
-      }, 3000);
+      notificate("You have successfully logged in!", 3000);
       navigate("/");
     } catch (error) {
-      setNotification(error.response.data.error);
-      setTimeout(() => {
-        setNotification(null);
-      }, 3000);
+      notificate(error.response.data.error, 3000);
     }
   };
 
@@ -79,7 +80,7 @@ const App = () => {
     event.preventDefault();
 
     window.localStorage.removeItem("loggedUser");
-    setUser(null);
+    setUser({});
 
     navigate("/");
   };
@@ -91,47 +92,9 @@ const App = () => {
       url,
     };
 
-    try {
-      const blog = await blogService.create(newBlog);
-      setBlogs([...blogs, { ...blog, user: user }]);
+    create(newBlog);
 
-      setNotification("Blog has been added!");
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
-
-      navigate("/");
-    } catch (error) {
-      setNotification(error.response.data.error);
-      setTimeout(() => {
-        setNotification(null);
-      }, 5000);
-    }
-  };
-
-  const handleLike = async (blog) => {
-    try {
-      const result = await blogService.update(blog.id, {
-        ...blog,
-        user: blog.user.id,
-        likes: ++blog.likes,
-      });
-
-      const newBlogs = blogs.map((blog) => {
-        if (blog.id === result.id) {
-          return {
-            ...result,
-            user: blog.user,
-          };
-        }
-
-        return blog;
-      });
-
-      setBlogs(newBlogs);
-    } catch (error) {
-      console.log(error.response);
-    }
+    navigate("/");
   };
 
   return (
@@ -143,14 +106,14 @@ const App = () => {
             <Button color="inherit" component={Link} to="/">
               <Typography>blogs</Typography>
             </Button>
-            {!user ? (
+            {!isLoggedIn() ? (
               <></>
             ) : (
               <Button color="inherit" component={Link} to="/create">
                 <Typography>new blog</Typography>
               </Button>
             )}
-            {!user ? (
+            {!isLoggedIn() ? (
               <Button color="inherit" component={Link} to="/login">
                 <Typography>login</Typography>
               </Button>
@@ -177,37 +140,18 @@ const App = () => {
               <Blogs notification={notification} sortedBlogs={sortedBlogs} />
             }
           />
-          <Route
-            path="/blogs/:id"
-            element={
-              <Blog
-                blog={blog}
-                blogs={blogs}
-                setBlogs={setBlogs}
-                user={user ? user : null}
-                handleLike={handleLike}
-              />
-            }
-          />
+          <Route path="/blogs/:id" element={<Blog blog={blog} />} />
           <Route
             path="/create"
-            element={
-              <NewBlogForm
-                handleBlogAddition={handleBlogAddition}
-                notification={notification}
-                user={user}
-              />
-            }
+            element={<NewBlogForm handleBlogAddition={handleBlogAddition} />}
           />
           <Route
             path="/login"
             element={
               <Login
                 handleLogin={handleLogin}
-                notification={notification}
                 password={password}
                 setPassword={setPassword}
-                user={user}
                 setUsername={setUsername}
               />
             }

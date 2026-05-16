@@ -1,18 +1,24 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Notification from "./Notification";
 import { Button, TextField } from "@mui/material";
+import NotificationContext from "../NotificationContext";
+import UserContext from "../UserContext";
 
-const NewBlogForm = ({ handleBlogAddition, notification, user }) => {
+const NewBlogForm = ({ handleBlogAddition }) => {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [url, setUrl] = useState("");
+  const { notification } = useContext(NotificationContext);
+  const { isLoggedIn } = useContext(UserContext);
 
   const navigate = useNavigate();
 
-  if (!user) {
-    return navigate("/");
-  }
+  useEffect(() => {
+    if (!isLoggedIn()) {
+      return navigate("/");
+    }
+  }, [isLoggedIn, navigate]);
 
   const addBlog = (event) => {
     event.preventDefault();
